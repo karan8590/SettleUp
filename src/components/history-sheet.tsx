@@ -69,9 +69,14 @@ export function HistorySheet({
             {payments.map((p) => (
               <li key={p.id} className="flex items-start justify-between gap-3 rounded-xl border border-border bg-card px-4 py-3">
                 <div className="min-w-0">
-                  <div className="flex items-baseline gap-2">
+                  <div className="flex items-baseline gap-2 flex-wrap">
                     <span className="font-semibold">{formatINR(Number(p.amount_paid))}</span>
                     <span className="text-xs text-muted-foreground">{formatDate(p.payment_date)}</span>
+                    {p.payment_mode && (
+                      <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-muted text-muted-foreground">
+                        {p.payment_mode}
+                      </span>
+                    )}
                   </div>
                   {p.payment_note && <p className="text-sm text-muted-foreground mt-0.5 break-words">{p.payment_note}</p>}
                 </div>
