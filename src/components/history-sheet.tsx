@@ -62,11 +62,11 @@ export function HistorySheet({
       <div className="rounded-2xl border border-border p-4 space-y-3">
         <div className="grid grid-cols-3 gap-2 text-center">
           <Stat label="Borrowed" value={formatINR(activeBorrowing.total_borrowed)} />
-          <Stat label="Paid" value={formatINR(activeBorrowing.total_paid)} />
-          <Stat label="Remaining" value={formatINR(activeBorrowing.remaining)} />
+          <Stat label="Paid" value={formatINR(activeBorrowing.total_paid)} valueClass="text-[#16A34A]" />
+          <Stat label="Remaining" value={formatINR(activeBorrowing.remaining)} valueClass="text-[#DC2626]" />
         </div>
-        <Progress value={pct} className="h-1.5" />
-        <p className="text-xs text-muted-foreground text-center">{pct}% paid</p>
+        <Progress value={pct} className="h-1.5 transition-all bg-secondary" indicatorClassName="bg-foreground" />
+        <p className="text-xs text-foreground font-medium text-center">{pct}% paid</p>
       </div>
 
       <div>
@@ -136,11 +136,11 @@ export function HistorySheet({
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Stat({ label, value, valueClass }: { label: string; value: string; valueClass?: string }) {
   return (
     <div>
       <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</p>
-      <p className="font-semibold text-sm mt-0.5">{value}</p>
+      <p className={`font-semibold text-sm mt-0.5 ${valueClass || "text-foreground"}`}>{value}</p>
     </div>
   );
 }

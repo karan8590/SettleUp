@@ -96,17 +96,8 @@ export function generateBorrowingPdf(b: BorrowingWithStats, payments: Payment[])
   let cy = y + 24;
   text("BORROWER", margin + 24, cy, { size: 10, bold: true, color: "#888888" });
   
-  // Status Pill Badge (Right Aligned)
   const pct = b.total_borrowed > 0 ? (b.total_paid / b.total_borrowed) * 100 : 0;
-  const status = pct === 0 ? "PENDING" : pct >= 100 ? "PAID" : "PARTIAL";
-  let bg = "#FEF3C7", tc = "#92400E", bc = "#FCD34D";
-  if (status === "PAID") { bg = "#DCFCE7"; tc = "#166534"; bc = "#86EFAC"; }
-  if (status === "PARTIAL") { bg = "#DBEAFE"; tc = "#1E40AF"; bc = "#93C5FD"; }
-  
-  doc.setFillColor(...hex2rgb(bg));
-  doc.setDrawColor(...hex2rgb(bc));
-  doc.roundedRect(pageW - margin - 24 - 60, cy - 10, 60, 20, 10, 10, "FD");
-  text(status, pageW - margin - 24 - 30, cy + 4, { size: 10, bold: true, color: tc, align: "center" });
+  // Status pill removed per request
 
   cy += 22;
   const initialsColorPallete = [
@@ -123,7 +114,6 @@ export function generateBorrowingPdf(b: BorrowingWithStats, payments: Payment[])
   text(b.person_name.charAt(0).toUpperCase(), margin + 40, cy - 1, { size: 14, bold: true, color: initialText, align: "center" });
 
   text(b.person_name, margin + 64, cy, { size: 22, bold: true, color: "#111111" });
-  text(`Ref: #LOAN-${b.id.slice(0, 6).toUpperCase()}`, pageW - margin - 24, cy, { size: 11, color: "#999999", align: "right" });
 
   cy += 18;
   const metaInfo = [b.phone_number, `Borrowed on ${formatDate(b.borrow_date)}`].filter(Boolean).join("  ·  ");
@@ -276,8 +266,6 @@ export function generateBorrowingPdf(b: BorrowingWithStats, payments: Payment[])
     doc.setFillColor(...hex2rgb("#16A34A"));
     doc.rect(margin + (contentW) / 2, fy - 18, (contentW) / 2, 2, "F");
     
-    text(`Ledger  ·  ${b.person_name}`, margin, fy, { size: 10, color: "#AAAAAA" });
-    text("CONFIDENTIAL — FOR PERSONAL USE ONLY", pageW / 2, fy, { size: 8, bold: true, color: "#9CA3AF", align: "center" });
     text(`Page ${i} of ${pageCount}`, pageW - margin, fy, { size: 10, color: "#AAAAAA", align: "right" });
   }
 

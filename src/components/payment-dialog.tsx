@@ -102,18 +102,18 @@ export function PaymentDialog({
         <div className="relative flex p-1 bg-muted rounded-xl">
           {/* Animated Slider Pill */}
           <div
-            className="absolute top-1 bottom-1 w-[calc(50%-4px)] bg-background shadow-sm rounded-lg transition-transform duration-300 ease-in-out"
+            className="absolute top-1 bottom-1 w-[calc(50%-4px)] bg-background border border-black/5 dark:border-white/5 shadow-sm rounded-lg transition-all duration-300 ease-out"
             style={{
-              transform: mode === "cash" ? "translateX(0)" : "translateX(100%)",
+              transform: mode === "cash" ? "translateX(0)" : "translateX(calc(100% + 8px))",
             }}
           />
           <button
             type="button"
             onClick={() => setMode("cash")}
-            className={`relative z-10 flex-1 flex items-center justify-center gap-2 h-10 text-sm font-medium rounded-lg transition-colors duration-300 ${
+            className={`relative z-10 flex-1 flex items-center justify-center gap-2 h-10 text-sm rounded-lg transition-colors duration-300 ${
               mode === "cash"
-                ? "text-foreground"
-                : "text-muted-foreground hover:text-foreground"
+                ? "text-foreground font-semibold"
+                : "text-muted-foreground font-medium hover:text-foreground"
             }`}
           >
             <Banknote className="h-4 w-4" />
@@ -122,10 +122,10 @@ export function PaymentDialog({
           <button
             type="button"
             onClick={() => setMode("online")}
-            className={`relative z-10 flex-1 flex items-center justify-center gap-2 h-10 text-sm font-medium rounded-lg transition-colors duration-300 ${
+            className={`relative z-10 flex-1 flex items-center justify-center gap-2 h-10 text-sm rounded-lg transition-colors duration-300 ${
               mode === "online"
-                ? "text-foreground"
-                : "text-muted-foreground hover:text-foreground"
+                ? "text-foreground font-semibold"
+                : "text-muted-foreground font-medium hover:text-foreground"
             }`}
           >
             <Smartphone className="h-4 w-4" />
@@ -141,7 +141,7 @@ export function PaymentDialog({
       ) : (
         <div className="space-y-1.5 animate-in fade-in slide-in-from-top-2">
           <Label htmlFor="pnote">Note</Label>
-          <Textarea id="pnote" rows={2} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Optional details..." autoFocus />
+          <Textarea id="pnote" rows={2} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Optional details..." />
         </div>
       )}
       <div className="sticky bottom-0 -mx-4 px-4 pt-4 pb-2 bg-background/80 backdrop-blur-md">
