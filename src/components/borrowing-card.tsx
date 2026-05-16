@@ -102,6 +102,17 @@ export function BorrowingCard({
         >
           <History className="h-4 w-4 mr-1" /> History
         </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          className="rounded-xl h-10 w-10 p-0 shrink-0"
+          onClick={handleDownload}
+          disabled={downloading}
+          aria-label="Download PDF"
+          title="Download PDF"
+        >
+          {downloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+        </Button>
       </div>
     </article>
   );
