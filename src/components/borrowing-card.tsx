@@ -19,6 +19,23 @@ export function BorrowingCard({
   onHistory: (b: BorrowingWithStats) => void;
 }) {
   const pct = b.total_borrowed > 0 ? Math.round((b.total_paid / b.total_borrowed) * 100) : 0;
+  const fetchPayments = useServerFn(listPayments);
+  const [downloading, setDownloading] = useState(false);
+
+  async function handleDownload() {
+    if (downloading) return;
+    setDownloading(true);
+    const t = toast.loading("Generating PDF…");
+    try {
+      const payments = await fetchPayments({ data: { borrowing_id: b.id } });
+      generateBorrowingPdf(b, payments as never);
+      toast.success("PDF downloaded successfully", { id: t });
+    } catch (e) {
+      toast.error("Failed to generate PDF. Please try again.", { id: t });
+    } finally {
+      setDownloading(false);
+    }
+  }
   return (
     <article
       className={cn(
