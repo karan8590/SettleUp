@@ -1,9 +1,13 @@
-import type { BorrowingWithStats } from "@/lib/borrowings.functions";
+import { useState } from "react";
+import { listPayments, type BorrowingWithStats } from "@/lib/borrowings.functions";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { formatINR, formatDate } from "@/lib/format";
-import { Phone, Calendar, Check, Clock, History, Wallet } from "lucide-react";
+import { Phone, Calendar, Check, Clock, History, Wallet, Download, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useServerFn } from "@tanstack/react-start";
+import { generateBorrowingPdf } from "@/lib/generate-pdf";
+import { toast } from "sonner";
 
 export function BorrowingCard({
   b,
