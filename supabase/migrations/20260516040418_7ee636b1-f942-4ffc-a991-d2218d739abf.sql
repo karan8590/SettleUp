@@ -1,0 +1,1 @@
+ALTER TABLE public.payments ADD COLUMN payment_mode TEXT NOT NULL DEFAULT 'cash' CHECK (payment_mode IN ('cash','online'));
