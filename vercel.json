@@ -10,11 +10,11 @@
       "includeFiles": "dist/server/**"
     }
   },
-  "rewrites": [
+  "routes": [
     { "handle": "filesystem" },
     {
-      "source": "/(.*)",
-      "destination": "/api/index.js"
+      "src": "/(.*)",
+      "dest": "/api/index.js"
     }
   ]
 }
