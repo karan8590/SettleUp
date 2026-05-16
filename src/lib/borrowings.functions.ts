@@ -127,6 +127,8 @@ export const recordPayment = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return row;
   });
+
+export const listPayments = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
     z.object({ borrowing_id: z.string().uuid() }).parse(input),
