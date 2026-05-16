@@ -1,9 +1,10 @@
 {
   "version": 2,
-  "public": false,
   "cleanUrls": true,
   "rewrites": [
-    { "source": "/assets/(.*)", "destination": "/dist/client/assets/$1" },
-    { "source": "/(.*)", "destination": "/api/index.js" }
+    {
+      "source": "/(.*)",
+      "destination": "/api"
+    }
   ]
 }
