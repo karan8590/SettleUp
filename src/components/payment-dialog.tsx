@@ -30,12 +30,14 @@ export function PaymentDialog({
   const pay = useServerFn(recordPayment);
   const [amount, setAmount] = useState("");
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [mode, setMode] = useState<"cash" | "online">("cash");
   const [note, setNote] = useState("");
 
   useEffect(() => {
     if (open && borrowing) {
       setAmount(String(borrowing.remaining));
       setDate(new Date().toISOString().slice(0, 10));
+      setMode("cash");
       setNote("");
     }
   }, [open, borrowing]);
@@ -47,6 +49,7 @@ export function PaymentDialog({
           borrowing_id: borrowing!.id,
           amount_paid: Number(amount),
           payment_date: date,
+          payment_mode: mode,
           payment_note: note.trim() || null,
         },
       }),
@@ -80,6 +83,25 @@ export function PaymentDialog({
       <div className="space-y-1.5">
         <Label htmlFor="pdate">Date</Label>
         <Input id="pdate" type="date" required value={date} onChange={(e) => setDate(e.target.value)} />
+      </div>
+      <div className="space-y-1.5">
+        <Label>Payment mode</Label>
+        <div className="grid grid-cols-2 gap-2">
+          {(["cash", "online"] as const).map((opt) => (
+            <button
+              key={opt}
+              type="button"
+              onClick={() => setMode(opt)}
+              className={`h-10 rounded-xl border text-sm font-medium capitalize transition ${
+                mode === opt
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-border bg-card text-foreground/80 hover:bg-muted"
+              }`}
+            >
+              {opt}
+            </button>
+          ))}
+        </div>
       </div>
       <div className="space-y-1.5">
         <Label htmlFor="pnote">Note</Label>

@@ -105,6 +105,7 @@ export const recordPayment = createServerFn({ method: "POST" })
         borrowing_id: z.string().uuid(),
         amount_paid: z.number().positive().max(1_000_000_000),
         payment_date: z.string().min(1),
+        payment_mode: z.enum(["cash", "online"]),
         payment_note: z.string().max(2000).optional().nullable(),
       })
       .parse(input),
@@ -118,6 +119,7 @@ export const recordPayment = createServerFn({ method: "POST" })
         borrowing_id: data.borrowing_id,
         amount_paid: data.amount_paid,
         payment_date: data.payment_date,
+        payment_mode: data.payment_mode,
         payment_note: data.payment_note || null,
       })
       .select()
