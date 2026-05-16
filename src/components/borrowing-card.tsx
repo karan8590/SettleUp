@@ -72,15 +72,15 @@ export function BorrowingCard({
 
       <div className="grid grid-cols-3 gap-2 mb-4">
         <Stat label="Borrowed" value={formatINR(b.total_borrowed)} />
-        <Stat label="Paid" value={formatINR(b.total_paid)} />
-        <Stat label="Remaining" value={formatINR(b.remaining)} highlight={!b.completed} />
+        <Stat label="Paid" value={formatINR(b.total_paid)} valueClass="text-[#16A34A]" />
+        <Stat label="Remaining" value={formatINR(b.remaining)} valueClass="text-[#DC2626]" />
       </div>
 
       <div className="mb-4">
-        <Progress value={pct} className="h-1.5 transition-all" />
-        <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
+        <Progress value={pct} className="h-1.5 transition-all bg-secondary" indicatorClassName="bg-foreground" />
+        <div className="mt-2 flex items-center justify-between text-xs text-foreground font-medium">
           <span>{pct}% paid</span>
-          {b.notes && <span className="truncate ml-3 max-w-[60%]">{b.notes}</span>}
+          {b.notes && <span className="truncate ml-3 max-w-[60%] text-muted-foreground font-normal">{b.notes}</span>}
         </div>
       </div>
 
@@ -118,11 +118,11 @@ export function BorrowingCard({
   );
 }
 
-function Stat({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
+function Stat({ label, value, valueClass }: { label: string; value: string; valueClass?: string }) {
   return (
     <div>
       <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</p>
-      <p className={cn("text-sm font-semibold mt-0.5 tabular-nums", highlight && "text-foreground")}>{value}</p>
+      <p className={cn("text-sm font-semibold mt-0.5 tabular-nums", valueClass || "text-foreground")}>{value}</p>
     </div>
   );
 }

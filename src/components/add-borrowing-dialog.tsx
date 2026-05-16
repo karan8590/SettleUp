@@ -8,12 +8,12 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from "@/components/ui/sheet";
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerDescription,
+} from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -69,15 +69,13 @@ export function AddBorrowingDialog({
         <Label htmlFor="name">Person name</Label>
         <Input id="name" required value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Aman Sharma" />
       </div>
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1.5">
-          <Label htmlFor="phone">Phone</Label>
-          <Input id="phone" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Optional" />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="date">Date</Label>
-          <Input id="date" type="date" required value={date} onChange={(e) => setDate(e.target.value)} />
-        </div>
+      <div className="space-y-1.5">
+        <Label htmlFor="phone">Phone</Label>
+        <Input id="phone" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Optional" />
+      </div>
+      <div className="space-y-1.5">
+        <Label htmlFor="date">Date</Label>
+        <Input id="date" type="date" required value={date} onChange={(e) => setDate(e.target.value)} />
       </div>
       <div className="space-y-1.5">
         <Label htmlFor="amount">Total borrowed (₹)</Label>
@@ -87,8 +85,8 @@ export function AddBorrowingDialog({
         <Label htmlFor="notes">Notes</Label>
         <Textarea id="notes" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional" />
       </div>
-      <div className="sticky bottom-0 -mx-1 pt-2">
-        <Button type="submit" disabled={m.isPending} className="w-full h-11 rounded-xl">
+      <div className="sticky bottom-0 -mx-4 px-4 pt-4 pb-2 bg-background/80 backdrop-blur-md">
+        <Button type="submit" disabled={m.isPending} className="w-full h-12 rounded-full shadow-lg text-base font-medium">
           {m.isPending ? "Saving…" : "Save borrowing"}
         </Button>
       </div>
@@ -97,15 +95,19 @@ export function AddBorrowingDialog({
 
   if (isMobile) {
     return (
-      <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side="bottom" className="rounded-t-3xl max-h-[92vh] overflow-y-auto">
-          <SheetHeader className="text-left">
-            <SheetTitle>Add borrowing</SheetTitle>
-            <SheetDescription>Record money you've lent.</SheetDescription>
-          </SheetHeader>
-          {form}
-        </SheetContent>
-      </Sheet>
+      <Drawer open={open} onOpenChange={onOpenChange} repositionInputs={false}>
+        <DrawerContent className="m-2 mb-[max(8px,env(safe-area-inset-bottom))] overflow-hidden !rounded-[40px] border border-border/50 shadow-2xl after:hidden max-h-[85vh]">
+          <div className="mx-auto w-full max-w-md flex flex-col h-full overflow-hidden">
+            <DrawerHeader className="text-left px-4 pt-4 shrink-0">
+              <DrawerTitle>Add borrowing</DrawerTitle>
+              <DrawerDescription>Record money you've lent.</DrawerDescription>
+            </DrawerHeader>
+            <div className="overflow-y-auto px-4 pb-4 flex-1">
+              {form}
+            </div>
+          </div>
+        </DrawerContent>
+      </Drawer>
     );
   }
 

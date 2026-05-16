@@ -1,10 +1,11 @@
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useEffect, useState } from "react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
 import {
-  Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
-} from "@/components/ui/sheet";
+  Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription,
+} from "@/components/ui/drawer";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { listPayments, deletePayment, type BorrowingWithStats } from "@/lib/borrowings.functions";
@@ -28,31 +29,41 @@ export function HistorySheet({
   const del = useServerFn(deletePayment);
   const qc = useQueryClient();
 
+  const [cachedBorrowing, setCachedBorrowing] = useState<BorrowingWithStats | null>(null);
+
+  useEffect(() => {
+    if (borrowing) {
+      setCachedBorrowing(borrowing);
+    }
+  }, [borrowing]);
+
+  const activeBorrowing = borrowing || cachedBorrowing;
+
   const { data: payments } = useQuery({
-    queryKey: ["payments", borrowing?.id],
-    queryFn: () => list({ data: { borrowing_id: borrowing!.id } }),
-    enabled: !!borrowing && open,
+    queryKey: ["payments", activeBorrowing?.id],
+    queryFn: () => list({ data: { borrowing_id: activeBorrowing!.id } }),
+    enabled: !!activeBorrowing && open,
   });
 
   const delM = useMutation({
     mutationFn: (id: string) => del({ data: { id } }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["borrowings"] });
-      qc.invalidateQueries({ queryKey: ["payments", borrowing?.id] });
+      qc.invalidateQueries({ queryKey: ["payments", activeBorrowing?.id] });
       toast.success("Payment deleted");
     },
   });
 
-  if (!borrowing) return null;
-  const pct = borrowing.total_borrowed > 0 ? Math.round((borrowing.total_paid / borrowing.total_borrowed) * 100) : 0;
+  if (!activeBorrowing) return null;
+  const pct = activeBorrowing.total_borrowed > 0 ? Math.round((activeBorrowing.total_paid / activeBorrowing.total_borrowed) * 100) : 0;
 
   const body = (
-    <div className="pt-2 space-y-5">
+    <div className="pt-2 space-y-5 pb-4">
       <div className="rounded-2xl border border-border p-4 space-y-3">
         <div className="grid grid-cols-3 gap-2 text-center">
-          <Stat label="Borrowed" value={formatINR(borrowing.total_borrowed)} />
-          <Stat label="Paid" value={formatINR(borrowing.total_paid)} />
-          <Stat label="Remaining" value={formatINR(borrowing.remaining)} />
+          <Stat label="Borrowed" value={formatINR(activeBorrowing.total_borrowed)} />
+          <Stat label="Paid" value={formatINR(activeBorrowing.total_paid)} />
+          <Stat label="Remaining" value={formatINR(activeBorrowing.remaining)} />
         </div>
         <Progress value={pct} className="h-1.5" />
         <p className="text-xs text-muted-foreground text-center">{pct}% paid</p>
@@ -91,20 +102,24 @@ export function HistorySheet({
     </div>
   );
 
-  const title = `${borrowing.person_name}`;
-  const desc = borrowing.phone_number ?? "Payment history";
+  const title = `${activeBorrowing.person_name}`;
+  const desc = activeBorrowing.phone_number ?? "Payment history";
 
   if (isMobile) {
     return (
-      <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side="bottom" className="rounded-t-3xl max-h-[92vh] overflow-y-auto">
-          <SheetHeader className="text-left">
-            <SheetTitle>{title}</SheetTitle>
-            <SheetDescription>{desc}</SheetDescription>
-          </SheetHeader>
-          {body}
-        </SheetContent>
-      </Sheet>
+      <Drawer open={open} onOpenChange={onOpenChange} repositionInputs={false}>
+        <DrawerContent className="m-2 mb-[max(8px,env(safe-area-inset-bottom))] overflow-hidden !rounded-[40px] border border-border/50 shadow-2xl after:hidden max-h-[85vh]">
+          <div className="mx-auto w-full max-w-md flex flex-col h-full overflow-hidden">
+            <DrawerHeader className="text-left px-4 pt-4 shrink-0">
+              <DrawerTitle>{title}</DrawerTitle>
+              <DrawerDescription>{desc}</DrawerDescription>
+            </DrawerHeader>
+            <div className="overflow-y-auto px-4 pb-4 flex-1">
+              {body}
+            </div>
+          </div>
+        </DrawerContent>
+      </Drawer>
     );
   }
 

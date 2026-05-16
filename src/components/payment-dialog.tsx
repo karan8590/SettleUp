@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Banknote, Smartphone } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
 import {
-  Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
-} from "@/components/ui/sheet";
+  Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription,
+} from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -32,6 +33,15 @@ export function PaymentDialog({
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [mode, setMode] = useState<"cash" | "online">("cash");
   const [note, setNote] = useState("");
+  const [showNote, setShowNote] = useState(false);
+
+  const [cachedBorrowing, setCachedBorrowing] = useState<BorrowingWithStats | null>(null);
+
+  useEffect(() => {
+    if (borrowing) {
+      setCachedBorrowing(borrowing);
+    }
+  }, [borrowing]);
 
   useEffect(() => {
     if (open && borrowing) {
@@ -39,14 +49,17 @@ export function PaymentDialog({
       setDate(new Date().toISOString().slice(0, 10));
       setMode("cash");
       setNote("");
+      setShowNote(false);
     }
   }, [open, borrowing]);
+
+  const activeBorrowing = borrowing || cachedBorrowing;
 
   const m = useMutation({
     mutationFn: () =>
       pay({
         data: {
-          borrowing_id: borrowing!.id,
+          borrowing_id: activeBorrowing!.id,
           amount_paid: Number(amount),
           payment_date: date,
           payment_mode: mode,
@@ -55,28 +68,28 @@ export function PaymentDialog({
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["borrowings"] });
-      qc.invalidateQueries({ queryKey: ["payments", borrowing?.id] });
+      qc.invalidateQueries({ queryKey: ["payments", activeBorrowing?.id] });
       toast.success("Payment recorded");
       onOpenChange(false);
     },
     onError: (e: Error) => toast.error(e.message),
   });
 
-  if (!borrowing) return null;
+  if (!activeBorrowing) return null;
 
   const form = (
     <form onSubmit={(e) => { e.preventDefault(); m.mutate(); }} className="space-y-4 pt-2">
-      <div className="rounded-xl bg-muted px-4 py-3 flex items-center justify-between">
-        <span className="text-sm text-muted-foreground">Remaining</span>
-        <span className="font-semibold">{formatINR(borrowing.remaining)}</span>
-      </div>
       <div className="space-y-1.5">
-        <Label htmlFor="pamount">Payment amount (₹)</Label>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="pamount">Payment amount (₹)</Label>
+          <span className="text-[11px] font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded-md">
+            Remaining: {formatINR(activeBorrowing.remaining)}
+          </span>
+        </div>
         <Input
           id="pamount" type="number" inputMode="decimal" required min="0.01" step="any"
-          max={borrowing.remaining}
+          max={activeBorrowing.remaining}
           value={amount} onChange={(e) => setAmount(e.target.value)}
-          autoFocus
         />
         <p className="text-xs text-muted-foreground">Edit to record a partial payment.</p>
       </div>
@@ -86,44 +99,74 @@ export function PaymentDialog({
       </div>
       <div className="space-y-1.5">
         <Label>Payment mode</Label>
-        <div className="grid grid-cols-2 gap-2">
-          {(["cash", "online"] as const).map((opt) => (
-            <button
-              key={opt}
-              type="button"
-              onClick={() => setMode(opt)}
-              className={`h-10 rounded-xl border text-sm font-medium capitalize transition ${
-                mode === opt
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "border-border bg-card text-foreground/80 hover:bg-muted"
-              }`}
-            >
-              {opt}
-            </button>
-          ))}
+        <div className="relative flex p-1 bg-muted rounded-xl">
+          {/* Animated Slider Pill */}
+          <div
+            className="absolute top-1 bottom-1 w-[calc(50%-4px)] bg-background shadow-sm rounded-lg transition-transform duration-300 ease-in-out"
+            style={{
+              transform: mode === "cash" ? "translateX(0)" : "translateX(100%)",
+            }}
+          />
+          <button
+            type="button"
+            onClick={() => setMode("cash")}
+            className={`relative z-10 flex-1 flex items-center justify-center gap-2 h-10 text-sm font-medium rounded-lg transition-colors duration-300 ${
+              mode === "cash"
+                ? "text-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Banknote className="h-4 w-4" />
+            Cash
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode("online")}
+            className={`relative z-10 flex-1 flex items-center justify-center gap-2 h-10 text-sm font-medium rounded-lg transition-colors duration-300 ${
+              mode === "online"
+                ? "text-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Smartphone className="h-4 w-4" />
+            Online
+          </button>
         </div>
       </div>
-      <div className="space-y-1.5">
-        <Label htmlFor="pnote">Note</Label>
-        <Textarea id="pnote" rows={2} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Optional" />
+
+      {!showNote ? (
+        <button type="button" onClick={() => setShowNote(true)} className="text-sm text-primary font-medium hover:underline flex items-center gap-1 pt-1">
+          + Add note
+        </button>
+      ) : (
+        <div className="space-y-1.5 animate-in fade-in slide-in-from-top-2">
+          <Label htmlFor="pnote">Note</Label>
+          <Textarea id="pnote" rows={2} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Optional details..." autoFocus />
+        </div>
+      )}
+      <div className="sticky bottom-0 -mx-4 px-4 pt-4 pb-2 bg-background/80 backdrop-blur-md">
+        <Button type="submit" disabled={m.isPending} className="w-full h-12 rounded-full shadow-lg text-base font-medium">
+          {m.isPending ? "Saving…" : `Record ${amount ? formatINR(Number(amount)) : "payment"}`}
+        </Button>
       </div>
-      <Button type="submit" disabled={m.isPending} className="w-full h-11 rounded-xl">
-        {m.isPending ? "Saving…" : `Record ${amount ? formatINR(Number(amount)) : "payment"}`}
-      </Button>
     </form>
   );
 
   if (isMobile) {
     return (
-      <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side="bottom" className="rounded-t-3xl max-h-[92vh] overflow-y-auto">
-          <SheetHeader className="text-left">
-            <SheetTitle>Record payment</SheetTitle>
-            <SheetDescription>From {borrowing.person_name}</SheetDescription>
-          </SheetHeader>
-          {form}
-        </SheetContent>
-      </Sheet>
+      <Drawer open={open} onOpenChange={onOpenChange} repositionInputs={false}>
+        <DrawerContent className="m-2 mb-[max(8px,env(safe-area-inset-bottom))] overflow-hidden !rounded-[40px] border border-border/50 shadow-2xl after:hidden max-h-[85vh]">
+          <div className="mx-auto w-full max-w-md flex flex-col h-full overflow-hidden">
+            <DrawerHeader className="text-left px-4 pt-4 shrink-0">
+              <DrawerTitle>Record payment</DrawerTitle>
+              <DrawerDescription>From {activeBorrowing.person_name}</DrawerDescription>
+            </DrawerHeader>
+            <div className="overflow-y-auto px-4 pb-4 flex-1">
+              {form}
+            </div>
+          </div>
+        </DrawerContent>
+      </Drawer>
     );
   }
 
@@ -132,7 +175,7 @@ export function PaymentDialog({
       <DialogContent className="sm:max-w-md rounded-2xl">
         <DialogHeader>
           <DialogTitle>Record payment</DialogTitle>
-          <DialogDescription>From {borrowing.person_name}</DialogDescription>
+          <DialogDescription>From {activeBorrowing.person_name}</DialogDescription>
         </DialogHeader>
         {form}
       </DialogContent>

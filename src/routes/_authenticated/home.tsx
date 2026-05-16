@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Search, Wallet } from "lucide-react";
 import { formatINR } from "@/lib/format";
+import { motion, AnimatePresence } from "framer-motion";
 
 export const Route = createFileRoute("/_authenticated/home")({
   component: HomePage,
@@ -59,7 +60,7 @@ function HomePage() {
               className="pl-9 h-10 rounded-xl bg-muted/60 border-transparent focus-visible:bg-card"
             />
           </div>
-          <Button onClick={() => setAddOpen(true)} className="h-10 rounded-xl shrink-0">
+          <Button onClick={() => setAddOpen(true)} className="h-9 rounded-[10px] shrink-0">
             <Plus className="h-4 w-4 md:mr-1" />
             <span className="hidden md:inline">Add</span>
           </Button>
@@ -74,11 +75,27 @@ function HomePage() {
           ) : filtered.length === 0 ? (
             <EmptyState onAdd={() => setAddOpen(true)} hasQuery={!!query} hasAny={active.length > 0} />
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              {filtered.map((b) => (
-                <BorrowingCard key={b.id} b={b} onPay={setPayTarget} onHistory={setHistTarget} />
-              ))}
-            </div>
+            <motion.div
+              variants={{ show: { transition: { staggerChildren: 0.025 } } }}
+              initial="hidden"
+              animate="show"
+              className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"
+            >
+              <AnimatePresence mode="popLayout">
+                {filtered.map((b) => (
+                  <motion.div
+                    key={b.id}
+                    layout="position"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ type: "spring", damping: 18, stiffness: 200 }}
+                  >
+                    <BorrowingCard b={b} onPay={setPayTarget} onHistory={setHistTarget} />
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </motion.div>
           )}
         </section>
       </main>
