@@ -67,12 +67,6 @@ function HomePage() {
       </header>
 
       <main className="px-4 md:px-8 py-5 max-w-6xl mx-auto w-full">
-        <section className="grid grid-cols-3 gap-2 md:gap-4 mb-6">
-          <SummaryCard label="Total Borrowed" value={formatINR(totals.borrowed)} tint="border-border bg-card" />
-          <SummaryCard label="Total Paid" value={formatINR(totals.paid)} tint="border-success-border bg-success/40" />
-          <SummaryCard label="Remaining" value={formatINR(totals.remaining)} tint="border-warning-border bg-warning/40" />
-        </section>
-
         <section>
           <h2 className="text-sm font-medium text-muted-foreground mb-3">Active borrowings</h2>
           {isLoading ? (
