@@ -1,9 +1,13 @@
-import type { BorrowingWithStats } from "@/lib/borrowings.functions";
+import { useState } from "react";
+import { listPayments, type BorrowingWithStats } from "@/lib/borrowings.functions";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { formatINR, formatDate } from "@/lib/format";
-import { Phone, Calendar, Check, Clock, History, Wallet } from "lucide-react";
+import { Phone, Calendar, Check, Clock, History, Wallet, Download, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useServerFn } from "@tanstack/react-start";
+import { generateBorrowingPdf } from "@/lib/generate-pdf";
+import { toast } from "sonner";
 
 export function BorrowingCard({
   b,
@@ -15,6 +19,23 @@ export function BorrowingCard({
   onHistory: (b: BorrowingWithStats) => void;
 }) {
   const pct = b.total_borrowed > 0 ? Math.round((b.total_paid / b.total_borrowed) * 100) : 0;
+  const fetchPayments = useServerFn(listPayments);
+  const [downloading, setDownloading] = useState(false);
+
+  async function handleDownload() {
+    if (downloading) return;
+    setDownloading(true);
+    const t = toast.loading("Generating PDF…");
+    try {
+      const payments = await fetchPayments({ data: { borrowing_id: b.id } });
+      generateBorrowingPdf(b, payments as never);
+      toast.success("PDF downloaded successfully", { id: t });
+    } catch (e) {
+      toast.error("Failed to generate PDF. Please try again.", { id: t });
+    } finally {
+      setDownloading(false);
+    }
+  }
   return (
     <article
       className={cn(
@@ -80,6 +101,17 @@ export function BorrowingCard({
           onClick={() => onHistory(b)}
         >
           <History className="h-4 w-4 mr-1" /> History
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          className="rounded-xl h-10 w-10 p-0 shrink-0"
+          onClick={handleDownload}
+          disabled={downloading}
+          aria-label="Download PDF"
+          title="Download PDF"
+        >
+          {downloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
         </Button>
       </div>
     </article>
