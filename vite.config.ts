@@ -1,10 +1,8 @@
-import { defineConfig } from 'vite'
-import { tanstackStart } from '@tanstack/start/plugin/vite'
+import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
 export default defineConfig({
-  plugins: [
-    tanstackStart({
-      target: 'vercel'
-    })
-  ]
-})
+  cloudflare: false,
+  tanstackStart: {
+    target: 'static',
+  },
+});
