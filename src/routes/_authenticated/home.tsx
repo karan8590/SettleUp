@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useMemo, useRef } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { listBorrowings, type BorrowingWithStats } from "@/lib/borrowings.functions";
 import { BorrowingCard } from "@/components/borrowing-card";
@@ -18,14 +18,28 @@ export const Route = createFileRoute("/_authenticated/home")({
   component: HomePage,
 });
 
+function debounce<T extends (...args: any[]) => void>(fn: T, delay = 300): T {
+  let timer: any = null;
+  return ((...args: any[]) => {
+    if (timer) return;
+    fn(...args);
+    timer = setTimeout(() => {
+      timer = null;
+    }, delay);
+  }) as any;
+}
+
 function HomePage() {
   const list = useServerFn(listBorrowings);
+  const qc = useQueryClient();
   const { data, isLoading } = useQuery({ queryKey: ["borrowings"], queryFn: () => list() });
 
   const [query, setQuery] = useState("");
   const [addOpen, setAddOpen] = useState(false);
   const [payTarget, setPayTarget] = useState<BorrowingWithStats | null>(null);
   const [histTarget, setHistTarget] = useState<BorrowingWithStats | null>(null);
+
+  const handleAddOpen = useRef(debounce(() => setAddOpen(true), 300)).current;
 
   const active = useMemo(() => (data ?? []).filter((b) => !b.completed), [data]);
   const filtered = useMemo(() => {
@@ -35,6 +49,14 @@ function HomePage() {
       (b) => b.person_name.toLowerCase().includes(q) || (b.phone_number ?? "").toLowerCase().includes(q),
     );
   }, [active, query]);
+
+  const handleSettleComplete = (id: string) => {
+    qc.setQueryData<BorrowingWithStats[]>(["borrowings"], (old) => {
+      return (old ?? []).map((b) =>
+        b.id === id ? { ...b, completed: true } : b
+      );
+    });
+  };
 
   const totals = useMemo(() => {
     const all = data ?? [];
@@ -58,10 +80,10 @@ function HomePage() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search name or phone…"
-              className="pl-9 h-10 rounded-xl bg-muted/60 border-transparent focus-visible:bg-card"
+              className="pl-9 h-10 rounded-xl bg-muted/60 border-transparent focus-visible:bg-card focus:shadow-[0_0_0_3px_rgba(0,0,0,0.1)] transition-all duration-200"
             />
           </div>
-          <Button onClick={() => setAddOpen(true)} className="h-9 rounded-[10px] shrink-0">
+          <Button onClick={handleAddOpen} className="h-9 rounded-[10px] shrink-0">
             <Plus className="h-4 w-4 md:mr-1" />
             <span className="hidden md:inline">Add</span>
           </Button>
@@ -75,7 +97,7 @@ function HomePage() {
           {isLoading ? (
             <p className="text-sm text-muted-foreground py-12 text-center">Loading…</p>
           ) : filtered.length === 0 ? (
-            <EmptyState onAdd={() => setAddOpen(true)} hasQuery={!!query} hasAny={active.length > 0} />
+            <EmptyState onAdd={handleAddOpen} hasQuery={!!query} hasAny={active.length > 0} />
           ) : (
             <motion.div
               variants={{ show: { transition: { staggerChildren: 0.025 } } }}
@@ -84,16 +106,22 @@ function HomePage() {
               className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"
             >
               <AnimatePresence mode="popLayout">
-                {filtered.map((b) => (
+                {filtered.map((b, index) => (
                   <motion.div
                     key={b.id}
                     layout="position"
-                    initial={{ opacity: 0, y: 10 }}
+                    initial={{ opacity: 0, y: 40 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95 }}
-                    transition={{ type: "spring", damping: 18, stiffness: 200 }}
+                    transition={{ duration: 0.35, ease: [0.34, 1.56, 0.64, 1] }}
                   >
-                    <BorrowingCard b={b} onPay={setPayTarget} onHistory={setHistTarget} />
+                    <BorrowingCard
+                      b={b}
+                      index={index}
+                      onPay={setPayTarget}
+                      onHistory={setHistTarget}
+                      onSettleComplete={handleSettleComplete}
+                    />
                   </motion.div>
                 ))}
               </AnimatePresence>

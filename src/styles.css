@@ -216,11 +216,26 @@
 @layer base {
   * {
     border-color: var(--color-border);
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
   }
 
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+  }
+
+  /* Autofill overrides for dark/light inputs */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  textarea:-webkit-autofill,
+  textarea:-webkit-autofill:hover,
+  textarea:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--foreground) !important;
+    -webkit-box-shadow: 0 0 0px 1000px var(--input) inset !important;
+    transition: background-color 5000s ease-in-out 0s;
+    caret-color: var(--foreground);
   }
 
   /* Transition for theme switching on all major elements */
@@ -248,4 +263,153 @@
   label {
     transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
   }
+}
+
+@keyframes bounce-badge {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+
+@keyframes scale-spring {
+  0% { transform: scale(0.8); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+button,
+a,
+nav-item,
+.card {
+  will-change: transform;
+}
+
+button:active,
+nav-item:active,
+.card:active,
+a:active,
+[role="button"]:active {
+  transform: scale(0.97) !important;
+  opacity: 0.85 !important;
+  transition: transform 80ms ease, opacity 80ms ease !important;
+}
+
+/* Vaul Drawer transition style customization */
+[data-vaul-drawer] {
+  transition: transform 320ms cubic-bezier(0.32, 0.72, 0, 1) !important;
+}
+
+[data-vaul-drawer-overlay] {
+  background-color: rgba(0, 0, 0, 0.5) !important;
+  transition: opacity 320ms cubic-bezier(0.32, 0.72, 0, 1) !important;
+}
+
+/* Sonner Toast overrides */
+.group-\[\.toaster\] {
+  font-family: inherit !important;
+}
+
+.group-\[\.toaster\] .toast {
+  background-color: #1C1C1E !important;
+  color: #F5F5F7 !important;
+  border: 1px solid #38383A !important;
+  border-radius: 12px !important;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5) !important;
+  will-change: transform, opacity;
+}
+
+.group-\[\.toaster\] .toast[data-type="success"] {
+  border-left: 4px solid #00C853 !important;
+}
+
+.group-\[\.toaster\] .toast[data-type="error"] {
+  border-left: 4px solid #FF3B30 !important;
+}
+
+.group-\[\.toaster\] [data-sonner-toast] {
+  transition: transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 300ms ease !important;
+}
+
+/* Button ripple effect */
+.ripple-btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.ripple-span {
+  position: absolute;
+  border-radius: 50%;
+  transform: scale(0);
+  animation: ripple-animation 600ms ease-out;
+  background-color: rgba(255, 255, 255, 0.3);
+  pointer-events: none;
+}
+
+@keyframes ripple-animation {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+/* ─── Mobile bottom nav ────────────────────────────── */
+/* Ensure bottom nav is always clickable above system
+   gesture area and never loses touch events            */
+@media (max-width: 767px) {
+  /* Main content must not extend under the bottom nav */
+  body {
+    /* fallback: 4rem nav + safe area */
+    padding-bottom: calc(4rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* Each nav item: minimum 48×48 Apple HIG tap target */
+  nav[class*="fixed"] ul li a,
+  nav[class*="fixed"] ul li button {
+    min-height: 56px;
+    min-width: 48px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 16px;
+    width: 100%;
+    cursor: pointer;
+    user-select: none;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* ─── Radix / Vaul overlay ghost-click fix ────────── */
+/* When a dialog/drawer overlay is closed (data-state=closed),
+   make it non-interactive immediately so it cannot block taps  */
+[data-state="closed"][class*="overlay"],
+[data-state="closed"][class*="Overlay"],
+[data-radix-dismissable-overlay][data-state="closed"],
+[data-vaul-overlay][data-state="closed"] {
+  pointer-events: none !important;
+}
+
+/* Also guard any element that is visually hidden */
+[aria-hidden="true"] {
+  pointer-events: none !important;
+}
+
+/* ─── Interactive element baseline ────────────────── */
+/* Every tappable element should feel fast and tactile */
+button,
+[role="button"],
+a,
+input[type="submit"],
+input[type="button"],
+select,
+label[for] {
+  cursor: pointer;
+  user-select: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }

@@ -7,6 +7,7 @@ import { BorrowingCard } from "@/components/borrowing-card";
 import { HistorySheet } from "@/components/history-sheet";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { CheckCircle2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 export const Route = createFileRoute("/_authenticated/completed")({
   component: CompletedPage,
@@ -38,11 +39,27 @@ function CompletedPage() {
             <p className="text-sm text-muted-foreground mt-1">They'll show up here once fully paid.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {completed.map((b) => (
-              <BorrowingCard key={b.id} b={b} onPay={() => {}} onHistory={setHist} />
-            ))}
-          </div>
+          <motion.div
+            variants={{ show: { transition: { staggerChildren: 0.025 } } }}
+            initial="hidden"
+            animate="show"
+            className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"
+          >
+            <AnimatePresence mode="popLayout">
+              {completed.map((b, index) => (
+                <motion.div
+                  key={b.id}
+                  layout="position"
+                  initial={{ opacity: 0, x: -40 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.35, ease: [0.34, 1.56, 0.64, 1] }}
+                >
+                  <BorrowingCard key={b.id} b={b} index={index} onPay={() => {}} onHistory={setHist} />
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </motion.div>
         )}
       </main>
       <HistorySheet borrowing={hist} open={!!hist} onOpenChange={(v) => !v && setHist(null)} />

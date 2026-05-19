@@ -40,38 +40,127 @@ export function AddBorrowingDialog({
   const [notes, setNotes] = useState("");
 
   const m = useMutation({
-    mutationFn: () =>
+    mutationFn: (vars: {
+      person_name: string;
+      phone_number: string | null;
+      borrow_date: string;
+      total_borrowed: number;
+      notes: string | null;
+    }) =>
       create({
-        data: {
-          person_name: name.trim(),
-          phone_number: phone.trim() || null,
-          borrow_date: date,
-          total_borrowed: Number(amount),
-          notes: notes.trim() || null,
-        },
+        data: vars,
       }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["borrowings"] });
-      toast.success("Borrowing added");
+    onMutate: async (newBorrowing) => {
+      await qc.cancelQueries({ queryKey: ["borrowings"] });
+      const previousBorrowings = qc.getQueryData<BorrowingWithStats[]>(["borrowings"]);
+
+      const tempId = "optimistic-" + Math.random().toString(36).slice(2);
+      const optimisticItem: BorrowingWithStats = {
+        id: tempId,
+        person_name: newBorrowing.person_name,
+        phone_number: newBorrowing.phone_number,
+        borrow_date: newBorrowing.borrow_date,
+        total_borrowed: newBorrowing.total_borrowed,
+        notes: newBorrowing.notes,
+        created_at: new Date().toISOString(),
+        total_paid: 0,
+        remaining: newBorrowing.total_borrowed,
+        completed: false,
+      };
+
+      qc.setQueryData<BorrowingWithStats[]>(["borrowings"], (old) => {
+        return [optimisticItem, ...(old ?? [])];
+      });
+
       onOpenChange(false);
       setName(""); setPhone(""); setAmount(""); setNotes("");
       setDate(new Date().toISOString().slice(0, 10));
+
+      return { previousBorrowings, tempId };
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (err, newBorrowing, context) => {
+      if (context?.previousBorrowings) {
+        qc.setQueryData<BorrowingWithStats[]>(["borrowings"], (old) => {
+          return (old ?? []).map((b) =>
+            b.id === context.tempId ? { ...b, failed: true } as any : b
+          );
+        });
+        setTimeout(() => {
+          qc.setQueryData(["borrowings"], context.previousBorrowings);
+        }, 600);
+      }
+      toast.error("Failed to add borrowing.");
+    },
+    onSuccess: (data, variables, context) => {
+      qc.setQueryData<BorrowingWithStats[]>(["borrowings"], (old) => {
+        return (old ?? []).map((b) =>
+          b.id === context?.tempId
+            ? {
+                id: data.id,
+                person_name: data.person_name,
+                phone_number: data.phone_number,
+                borrow_date: data.borrow_date,
+                total_borrowed: Number(data.total_borrowed),
+                notes: data.notes,
+                created_at: data.created_at,
+                total_paid: 0,
+                remaining: Number(data.total_borrowed),
+                completed: false,
+              }
+            : b
+        );
+      });
+      toast.success("Borrowing added");
+    },
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: ["borrowings"] });
+    },
   });
 
-  const form = (
-    <form
-      onSubmit={(e) => { e.preventDefault(); m.mutate(); }}
-      className="space-y-4 pt-2"
-    >
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (phone.trim().length > 0 && phone.trim().length !== 10) {
+      toast.error("Phone number must be exactly 10 digits.");
+      return;
+    }
+    m.mutate({
+      person_name: name.trim(),
+      phone_number: phone.trim() || null,
+      borrow_date: date,
+      total_borrowed: Number(amount),
+      notes: notes.trim() || null,
+    });
+  };
+
+  const fields = (
+    <div className="space-y-4 pt-2">
       <div className="space-y-1.5">
         <Label htmlFor="name">Person name</Label>
         <Input id="name" required value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Aman Sharma" />
       </div>
       <div className="space-y-1.5">
-        <Label htmlFor="phone">Phone</Label>
-        <Input id="phone" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Optional" />
+        <Label htmlFor="phone">
+          Phone <span className="text-muted-foreground font-normal text-xs">(optional)</span>
+        </Label>
+        <Input
+          id="phone"
+          type="tel"
+          inputMode="numeric"
+          maxLength={10}
+          pattern="[0-9]{10}"
+          value={phone}
+          onChange={(e) => {
+            // strip any non-digit characters
+            const digits = e.target.value.replace(/\D/g, "").slice(0, 10);
+            setPhone(digits);
+          }}
+          placeholder="10-digit mobile number"
+        />
+        {phone.length > 0 && phone.length < 10 && (
+          <p className="text-xs text-destructive mt-1">
+            {10 - phone.length} more digit{10 - phone.length !== 1 ? "s" : ""} needed
+          </p>
+        )}
       </div>
       <div className="space-y-1.5">
         <Label htmlFor="date">Date</Label>
@@ -83,14 +172,9 @@ export function AddBorrowingDialog({
       </div>
       <div className="space-y-1.5">
         <Label htmlFor="notes">Notes</Label>
-        <Textarea id="notes" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional" />
+        <Textarea id="notes" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional" />
       </div>
-      <div className="sticky bottom-0 -mx-4 px-4 pt-4 pb-2 bg-background/80 backdrop-blur-md">
-        <Button type="submit" disabled={m.isPending} className="w-full h-12 rounded-full shadow-lg text-base font-medium">
-          {m.isPending ? "Saving…" : "Save borrowing"}
-        </Button>
-      </div>
-    </form>
+    </div>
   );
 
   if (isMobile) {
@@ -102,9 +186,18 @@ export function AddBorrowingDialog({
               <DrawerTitle>Add borrowing</DrawerTitle>
               <DrawerDescription>Record money you've lent.</DrawerDescription>
             </DrawerHeader>
-            <div className="overflow-y-auto px-4 pb-4 flex-1">
-              {form}
-            </div>
+            {/* Scrollable fields */}
+            <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+              <div className="overflow-y-auto px-4 flex-1">
+                {fields}
+              </div>
+              {/* Sticky submit pinned to bottom of drawer */}
+              <div className="shrink-0 px-4 pt-3 pb-4 bg-background/80 backdrop-blur-md border-t border-border/40">
+                <Button type="submit" disabled={m.isPending} className="w-full h-12 rounded-full shadow-lg text-base font-medium">
+                  {m.isPending ? "Saving…" : "Save borrowing"}
+                </Button>
+              </div>
+            </form>
           </div>
         </DrawerContent>
       </Drawer>
@@ -118,7 +211,15 @@ export function AddBorrowingDialog({
           <DialogTitle>Add borrowing</DialogTitle>
           <DialogDescription>Record money you've lent.</DialogDescription>
         </DialogHeader>
-        {form}
+        {/* Dialog: simple flow layout, button sits naturally below notes */}
+        <form onSubmit={handleSubmit} className="space-y-0">
+          {fields}
+          <div className="pt-5">
+            <Button type="submit" disabled={m.isPending} className="w-full h-11 rounded-xl text-base font-medium">
+              {m.isPending ? "Saving…" : "Save borrowing"}
+            </Button>
+          </div>
+        </form>
       </DialogContent>
     </Dialog>
   );

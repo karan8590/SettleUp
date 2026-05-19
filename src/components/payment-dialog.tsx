@@ -56,29 +56,72 @@ export function PaymentDialog({
   const activeBorrowing = borrowing || cachedBorrowing;
 
   const m = useMutation({
-    mutationFn: () =>
+    mutationFn: (vars: {
+      borrowing_id: string;
+      amount_paid: number;
+      payment_date: string;
+      payment_mode: "cash" | "online";
+      payment_note: string | null;
+    }) =>
       pay({
-        data: {
-          borrowing_id: activeBorrowing!.id,
-          amount_paid: Number(amount),
-          payment_date: date,
-          payment_mode: mode,
-          payment_note: note.trim() || null,
-        },
+        data: vars,
       }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["borrowings"] });
-      qc.invalidateQueries({ queryKey: ["payments", activeBorrowing?.id] });
-      toast.success("Payment recorded");
+    onMutate: async (newPayment) => {
+      await qc.cancelQueries({ queryKey: ["borrowings"] });
+      const previousBorrowings = qc.getQueryData<BorrowingWithStats[]>(["borrowings"]);
+
+      qc.setQueryData<BorrowingWithStats[]>(["borrowings"], (old) => {
+        return (old ?? []).map((b) => {
+          if (b.id === newPayment.borrowing_id) {
+            const nextPaid = b.total_paid + newPayment.amount_paid;
+            const nextRemaining = Math.max(b.total_borrowed - nextPaid, 0);
+            return {
+              ...b,
+              total_paid: nextPaid,
+              remaining: nextRemaining,
+              // Keep completed: false so the visual settlement sequence runs on the Active page first!
+              completed: false,
+            };
+          }
+          return b;
+        });
+      });
+
       onOpenChange(false);
+
+      return { previousBorrowings };
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (err, newPayment, context) => {
+      if (context?.previousBorrowings) {
+        qc.setQueryData(["borrowings"], context.previousBorrowings);
+      }
+      toast.error("Payment failed. Please try again.");
+    },
+    onSuccess: (data, variables) => {
+      toast.success("Payment recorded");
+      qc.invalidateQueries({ queryKey: ["payments", variables.borrowing_id] });
+    },
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: ["borrowings"] });
+    },
   });
 
   if (!activeBorrowing) return null;
 
   const form = (
-    <form onSubmit={(e) => { e.preventDefault(); m.mutate(); }} className="space-y-4 pt-2">
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        m.mutate({
+          borrowing_id: activeBorrowing!.id,
+          amount_paid: Number(amount),
+          payment_date: date,
+          payment_mode: mode,
+          payment_note: note.trim() || null,
+        });
+      }}
+      className="space-y-4 pt-2"
+    >
       <div className="space-y-1.5">
         <div className="flex items-center justify-between">
           <Label htmlFor="pamount">Payment amount (₹)</Label>
