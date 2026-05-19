@@ -1,0 +1,9 @@
+.env
+.git
+.gitignore
+node_modules
+bun.lock
+package-lock.json
+.lovable
+dist
+.output
