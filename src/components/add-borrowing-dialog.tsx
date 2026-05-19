@@ -66,27 +66,46 @@ export function AddBorrowingDialog({
       className="space-y-4 pt-2"
     >
       <div className="space-y-1.5">
-        <Label htmlFor="name">Person name</Label>
-        <Input id="name" required value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Aman Sharma" />
+        <Label htmlFor="name" className="text-foreground dark:text-[#F5F5F7] font-medium">Person name</Label>
+        <Input
+          id="name" required value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Aman Sharma"
+          className="bg-[#F2F2F7] border-[#E5E5EA] dark:bg-[#2C2C2E] dark:border-[#3A3A3C] rounded-xl text-foreground p-4 h-12 focus-visible:ring-0 focus-visible:border-primary"
+        />
       </div>
       <div className="space-y-1.5">
-        <Label htmlFor="phone">Phone</Label>
-        <Input id="phone" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Optional" />
+        <Label htmlFor="phone" className="text-foreground dark:text-[#F5F5F7] font-medium">Phone</Label>
+        <Input
+          id="phone" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Optional"
+          className="bg-[#F2F2F7] border-[#E5E5EA] dark:bg-[#2C2C2E] dark:border-[#3A3A3C] rounded-xl text-foreground p-4 h-12 focus-visible:ring-0 focus-visible:border-primary"
+        />
       </div>
       <div className="space-y-1.5">
-        <Label htmlFor="date">Date</Label>
-        <Input id="date" type="date" required value={date} onChange={(e) => setDate(e.target.value)} />
+        <Label htmlFor="date" className="text-foreground dark:text-[#F5F5F7] font-medium">Date</Label>
+        <Input
+          id="date" type="date" required value={date} onChange={(e) => setDate(e.target.value)}
+          className="bg-[#F2F2F7] border-[#E5E5EA] dark:bg-[#2C2C2E] dark:border-[#3A3A3C] rounded-xl text-foreground p-4 h-12 focus-visible:ring-0 focus-visible:border-primary"
+        />
       </div>
       <div className="space-y-1.5">
-        <Label htmlFor="amount">Total borrowed (₹)</Label>
-        <Input id="amount" type="number" inputMode="decimal" required min="1" step="any" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0" />
+        <Label htmlFor="amount" className="text-foreground dark:text-[#F5F5F7] font-medium">Total borrowed (₹)</Label>
+        <Input
+          id="amount" type="number" inputMode="decimal" required min="1" step="any" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0"
+          className="bg-[#F2F2F7] border-[#E5E5EA] dark:bg-[#2C2C2E] dark:border-[#3A3A3C] rounded-xl text-foreground p-4 h-12 focus-visible:ring-0 focus-visible:border-primary"
+        />
       </div>
       <div className="space-y-1.5">
-        <Label htmlFor="notes">Notes</Label>
-        <Textarea id="notes" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional" />
+        <Label htmlFor="notes" className="text-foreground dark:text-[#F5F5F7] font-medium">Notes</Label>
+        <Textarea
+          id="notes" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional"
+          className="bg-[#F2F2F7] border-[#E5E5EA] dark:bg-[#2C2C2E] dark:border-[#3A3A3C] rounded-xl text-foreground p-4 min-h-[80px] focus-visible:ring-0 focus-visible:border-primary"
+        />
       </div>
       <div className="sticky bottom-0 -mx-4 px-4 pt-4 pb-2 bg-background/80 backdrop-blur-md">
-        <Button type="submit" disabled={m.isPending} className="w-full h-12 rounded-full shadow-lg text-base font-medium">
+        <Button
+          type="submit"
+          disabled={m.isPending}
+          className="w-full h-12 bg-[#1A1A1A] text-white dark:bg-[#FFFFFF] dark:text-[#000000] hover:opacity-90 rounded-full shadow-lg text-base font-semibold"
+        >
           {m.isPending ? "Saving…" : "Save borrowing"}
         </Button>
       </div>
@@ -96,7 +115,7 @@ export function AddBorrowingDialog({
   if (isMobile) {
     return (
       <Drawer open={open} onOpenChange={onOpenChange} repositionInputs={false}>
-        <DrawerContent className="m-2 mb-[max(8px,env(safe-area-inset-bottom))] overflow-hidden !rounded-[40px] border border-border/50 shadow-2xl after:hidden max-h-[85dvh]">
+        <DrawerContent className="max-h-[85dvh]">
           <div className="mx-auto w-full max-w-md flex flex-col h-full overflow-hidden">
             <DrawerHeader className="text-left px-4 pt-4 shrink-0">
               <DrawerTitle>Add borrowing</DrawerTitle>

@@ -108,7 +108,7 @@ export function HistorySheet({
   if (isMobile) {
     return (
       <Drawer open={open} onOpenChange={onOpenChange} repositionInputs={false}>
-        <DrawerContent className="m-2 mb-[max(8px,env(safe-area-inset-bottom))] overflow-hidden !rounded-[40px] border border-border/50 shadow-2xl after:hidden max-h-[85dvh]">
+        <DrawerContent className="max-h-[85dvh]">
           <div className="mx-auto w-full max-w-md flex flex-col h-full overflow-hidden">
             <DrawerHeader className="text-left px-4 pt-4 shrink-0">
               <DrawerTitle>{title}</DrawerTitle>
