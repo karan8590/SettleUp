@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { type BorrowingWithStats } from "@/lib/borrowings.functions";
+import { vibrate, HAPTIC_PATTERNS } from "@/lib/haptics";
 import {
   Dialog,
   DialogContent,
@@ -39,6 +41,19 @@ export function AddBorrowingDialog({
   const [amount, setAmount] = useState("");
   const [notes, setNotes] = useState("");
 
+  const isFirstRender = useRef(true);
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    if (open) {
+      vibrate(HAPTIC_PATTERNS.BOTTOM_SHEET_OPEN);
+    } else {
+      vibrate(HAPTIC_PATTERNS.BOTTOM_SHEET_CLOSE);
+    }
+  }, [open]);
+
   const m = useMutation({
     mutationFn: (vars: {
       person_name: string;
@@ -76,9 +91,14 @@ export function AddBorrowingDialog({
       setName(""); setPhone(""); setAmount(""); setNotes("");
       setDate(new Date().toISOString().slice(0, 10));
 
+      setTimeout(() => {
+        vibrate(HAPTIC_PATTERNS.ADD_BORROWING);
+      }, 100);
+
       return { previousBorrowings, tempId };
     },
     onError: (err, newBorrowing, context) => {
+      vibrate(HAPTIC_PATTERNS.ERROR_FAILED);
       if (context?.previousBorrowings) {
         qc.setQueryData<BorrowingWithStats[]>(["borrowings"], (old) => {
           return (old ?? []).map((b) =>
@@ -120,9 +140,11 @@ export function AddBorrowingDialog({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (phone.trim().length > 0 && phone.trim().length !== 10) {
+      vibrate(HAPTIC_PATTERNS.ERROR_FAILED);
       toast.error("Phone number must be exactly 10 digits.");
       return;
     }
+    vibrate(HAPTIC_PATTERNS.BUTTON_TAP);
     m.mutate({
       person_name: name.trim(),
       phone_number: phone.trim() || null,

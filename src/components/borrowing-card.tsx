@@ -10,6 +10,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { generateBorrowingPdf } from "@/lib/generate-pdf";
 import { toast } from "sonner";
 import { AnimatedNumber } from "@/components/animated-number";
+import { vibrate, HAPTIC_PATTERNS } from "@/lib/haptics";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 const wait = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
@@ -140,6 +141,7 @@ export function BorrowingCard({
   const handleDownloadClick = useRef(debounce(() => handleDownload(), 300)).current;
 
   const handleHistoryClick = async () => {
+    vibrate(HAPTIC_PATTERNS.BUTTON_TAP);
     if (historyLoading) return;
     setHistoryLoading(true);
     try {
@@ -150,6 +152,7 @@ export function BorrowingCard({
       });
       onHistory(b);
     } catch (e) {
+      vibrate(HAPTIC_PATTERNS.ERROR_FAILED);
       toast.error("Failed to load history");
     } finally {
       setHistoryLoading(false);
@@ -255,9 +258,7 @@ export function BorrowingCard({
           stamp.classList.add("stamp-in");
         });
 
-        if (typeof navigator !== "undefined" && navigator.vibrate) {
-          navigator.vibrate([10, 30, 60]);
-        }
+        vibrate(HAPTIC_PATTERNS.PAYMENT_COMPLETE);
 
         await wait(350 + 800);
         if (cancelled) return;
@@ -321,6 +322,7 @@ export function BorrowingCard({
 
   // ── Download handler ──────────────────────────────────────────────────────
   async function handleDownload() {
+    vibrate(HAPTIC_PATTERNS.BUTTON_TAP);
     if (downloading) return;
     setDownloading(true);
     const t = toast.loading("Generating PDF…");
@@ -329,6 +331,7 @@ export function BorrowingCard({
       generateBorrowingPdf(b, payments as never);
       toast.success("PDF downloaded successfully", { id: t });
     } catch (e) {
+      vibrate(HAPTIC_PATTERNS.ERROR_FAILED);
       toast.error("Failed to generate PDF. Please try again.", { id: t });
     } finally {
       setDownloading(false);
@@ -463,6 +466,7 @@ export function BorrowingCard({
           className="flex-1 rounded-xl h-10 ripple-btn"
           disabled={b.completed || isOptimistic || animating}
           onClick={(e) => {
+            vibrate(HAPTIC_PATTERNS.BUTTON_TAP);
             const btn = e.currentTarget;
             const circle = document.createElement("span");
             const diameter = Math.max(btn.clientWidth, btn.clientHeight);

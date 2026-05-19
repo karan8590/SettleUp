@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Plus, Search, Wallet } from "lucide-react";
 import { formatINR } from "@/lib/format";
 import { motion, AnimatePresence } from "framer-motion";
+import { vibrate, HAPTIC_PATTERNS } from "@/lib/haptics";
 
 export const Route = createFileRoute("/_authenticated/home")({
   component: HomePage,
@@ -79,11 +80,18 @@ function HomePage() {
             <Input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
+              onFocus={() => vibrate(HAPTIC_PATTERNS.SEARCH_BAR_FOCUS)}
               placeholder="Search name or phone…"
               className="pl-9 h-10 rounded-xl bg-muted/60 border-transparent focus-visible:bg-card focus:shadow-[0_0_0_3px_rgba(0,0,0,0.1)] transition-all duration-200"
             />
           </div>
-          <Button onClick={handleAddOpen} className="h-9 rounded-[10px] shrink-0">
+          <Button
+            onClick={() => {
+              vibrate(HAPTIC_PATTERNS.BUTTON_TAP);
+              handleAddOpen();
+            }}
+            className="h-9 rounded-[10px] shrink-0"
+          >
             <Plus className="h-4 w-4 md:mr-1" />
             <span className="hidden md:inline">Add</span>
           </Button>

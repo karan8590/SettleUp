@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Wallet } from "lucide-react";
+import { vibrate, HAPTIC_PATTERNS } from "@/lib/haptics";
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
@@ -43,6 +44,7 @@ function LoginPage() {
         if (error) throw error;
       }
     } catch (err) {
+      vibrate(HAPTIC_PATTERNS.ERROR_FAILED);
       toast.error(err instanceof Error ? err.message : "Authentication failed");
     } finally {
       setBusy(false);
@@ -69,21 +71,33 @@ function LoginPage() {
           <div className="flex gap-1 p-1 bg-muted rounded-xl mb-5">
             <button
               type="button"
-              onClick={() => setMode("signin")}
+              onClick={() => {
+                vibrate(HAPTIC_PATTERNS.TAB_SWITCH);
+                setMode("signin");
+              }}
               className={`flex-1 text-sm py-2 rounded-lg transition ${mode === "signin" ? "bg-card shadow-sm font-medium" : "text-muted-foreground"}`}
             >
               Sign in
             </button>
             <button
               type="button"
-              onClick={() => setMode("signup")}
+              onClick={() => {
+                vibrate(HAPTIC_PATTERNS.TAB_SWITCH);
+                setMode("signup");
+              }}
               className={`flex-1 text-sm py-2 rounded-lg transition ${mode === "signup" ? "bg-card shadow-sm font-medium" : "text-muted-foreground"}`}
             >
               Create account
             </button>
           </div>
 
-          <form onSubmit={handleEmail} className="space-y-4">
+          <form
+            onSubmit={(e) => {
+              vibrate(HAPTIC_PATTERNS.BUTTON_TAP);
+              handleEmail(e);
+            }}
+            className="space-y-4"
+          >
             <div className="space-y-1.5">
               <Label htmlFor="email">Email</Label>
               <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" autoComplete="email" className="h-11 rounded-xl" />

@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { vibrate, HAPTIC_PATTERNS } from "@/lib/haptics";
 import { Banknote, Smartphone } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
@@ -55,6 +56,19 @@ export function PaymentDialog({
 
   const activeBorrowing = borrowing || cachedBorrowing;
 
+  const isFirstRender = useRef(true);
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    if (open) {
+      vibrate(HAPTIC_PATTERNS.BOTTOM_SHEET_OPEN);
+    } else {
+      vibrate(HAPTIC_PATTERNS.BOTTOM_SHEET_CLOSE);
+    }
+  }, [open]);
+
   const m = useMutation({
     mutationFn: (vars: {
       borrowing_id: string;
@@ -92,6 +106,7 @@ export function PaymentDialog({
       return { previousBorrowings };
     },
     onError: (err, newPayment, context) => {
+      vibrate(HAPTIC_PATTERNS.ERROR_FAILED);
       if (context?.previousBorrowings) {
         qc.setQueryData(["borrowings"], context.previousBorrowings);
       }
@@ -99,6 +114,11 @@ export function PaymentDialog({
     },
     onSuccess: (data, variables) => {
       toast.success("Payment recorded");
+      if (activeBorrowing && variables.amount_paid < activeBorrowing.remaining) {
+        setTimeout(() => {
+          vibrate(HAPTIC_PATTERNS.RECORD_PAYMENT);
+        }, 700);
+      }
       // Invalidate & remove payments cache so next History tap fetches fresh data (Problem 4)
       qc.invalidateQueries({ queryKey: ["payments", variables.borrowing_id] });
       qc.removeQueries({ queryKey: ["payments", variables.borrowing_id] });
@@ -114,6 +134,7 @@ export function PaymentDialog({
     <form
       onSubmit={(e) => {
         e.preventDefault();
+        vibrate(HAPTIC_PATTERNS.BUTTON_TAP);
         m.mutate({
           borrowing_id: activeBorrowing!.id,
           amount_paid: Number(amount),

@@ -7,6 +7,7 @@ import { exportData } from "@/lib/borrowings.functions";
 import { toast } from "sonner";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LogOut, Download, Info } from "lucide-react";
+import { vibrate, HAPTIC_PATTERNS } from "@/lib/haptics";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   component: SettingsPage,
@@ -16,6 +17,22 @@ function SettingsPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const exp = useServerFn(exportData);
+
+  const [vibrationEnabled, setVibrationEnabled] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("lendledger_vibration") !== "false";
+    }
+    return true;
+  });
+
+  const toggleVibration = () => {
+    const nextVal = !vibrationEnabled;
+    setVibrationEnabled(nextVal);
+    localStorage.setItem("lendledger_vibration", String(nextVal));
+    if (nextVal) {
+      vibrate(HAPTIC_PATTERNS.BUTTON_TAP);
+    }
+  };
 
   async function handleExport() {
     try {
@@ -30,6 +47,7 @@ function SettingsPage() {
       toast.success("Export ready");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Export failed");
+      vibrate(HAPTIC_PATTERNS.ERROR_FAILED);
     }
   }
 
@@ -48,6 +66,24 @@ function SettingsPage() {
       <main className="px-4 md:px-8 py-5 max-w-2xl mx-auto w-full space-y-3">
         <Section title="Appearance" desc="Switch between light and dark themes.">
           <ThemeToggle />
+        </Section>
+
+        <Section title="Haptic Feedback" desc="Feel vibrations for payments and actions">
+          <button
+            type="button"
+            onClick={toggleVibration}
+            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
+              vibrationEnabled ? "bg-[#00C853]" : "bg-muted-foreground/30"
+            }`}
+            role="switch"
+            aria-checked={vibrationEnabled}
+          >
+            <span
+              className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-background shadow ring-0 transition duration-200 ease-in-out ${
+                vibrationEnabled ? "translate-x-5" : "translate-x-0"
+              }`}
+            />
+          </button>
         </Section>
 
         <Section title="Account" desc={user?.email ?? ""}>

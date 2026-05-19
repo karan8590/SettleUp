@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { listBorrowings } from "@/lib/borrowings.functions";
 import { motion, AnimatePresence } from "framer-motion";
+import { vibrate, HAPTIC_PATTERNS } from "@/lib/haptics";
 
 export const Route = createFileRoute("/_authenticated")({
   component: AuthenticatedLayout,
@@ -92,6 +93,7 @@ function AuthenticatedLayout() {
                 to={item.to}
                 onClick={(e) => {
                   e.preventDefault();
+                  vibrate(HAPTIC_PATTERNS.TAB_SWITCH);
                   handleNav(item.to);
                 }}
                 className={cn(
@@ -147,6 +149,7 @@ function AuthenticatedLayout() {
                   to={item.to}
                   onClick={(e) => {
                     e.preventDefault();
+                    vibrate(HAPTIC_PATTERNS.TAB_SWITCH);
                     handleNav(item.to);
                   }}
                   className={cn(

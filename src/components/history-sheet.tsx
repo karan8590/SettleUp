@@ -1,5 +1,6 @@
+import { useEffect, useState, useRef } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useEffect, useState } from "react";
+import { vibrate, HAPTIC_PATTERNS } from "@/lib/haptics";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
@@ -39,6 +40,19 @@ export function HistorySheet({
 
   const activeBorrowing = borrowing || cachedBorrowing;
 
+  const isFirstRender = useRef(true);
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    if (open) {
+      vibrate(HAPTIC_PATTERNS.BOTTOM_SHEET_OPEN);
+    } else {
+      vibrate(HAPTIC_PATTERNS.BOTTOM_SHEET_CLOSE);
+    }
+  }, [open]);
+
   // Data is pre-fetched by BorrowingCard before the sheet opens.
   // initialData ensures the sheet renders immediately with cached content.
   const { data: payments } = useQuery({
@@ -51,6 +65,7 @@ export function HistorySheet({
   const delM = useMutation({
     mutationFn: (id: string) => del({ data: { id } }),
     onSuccess: () => {
+      vibrate(HAPTIC_PATTERNS.DELETE_UNDO);
       qc.invalidateQueries({ queryKey: ["borrowings"] });
       qc.invalidateQueries({ queryKey: ["payments", activeBorrowing?.id] });
       // Also clear stale time so next History tap re-fetches fresh data
@@ -58,6 +73,7 @@ export function HistorySheet({
       toast.success("Payment deleted");
     },
     onError: () => {
+      vibrate(HAPTIC_PATTERNS.ERROR_FAILED);
       toast.error("Failed to delete payment");
     },
   });
@@ -197,7 +213,10 @@ export function HistorySheet({
                     size="icon"
                     className="h-8 w-8 text-muted-foreground hover:text-destructive shrink-0"
                     disabled={delM.isPending}
-                    onClick={() => delM.mutate(p.id)}
+                    onClick={() => {
+                      vibrate(HAPTIC_PATTERNS.BUTTON_TAP);
+                      delM.mutate(p.id);
+                    }}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
